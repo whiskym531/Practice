@@ -1,0 +1,52 @@
+server:
+  context-path: /
+  port: 9004
+spring:
+  datasource:
+#    test1:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/test?useUnicode=true&characterEncoding=UTF8
+    username: root
+    password:
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    listener:
+      simple:
+        concurrency: 1
+        max-concurrency: 5
+        prefetch: 1
+        acknowledge-mode: manual
+        retry:
+          enabled: true
+          max-attempts: 5           #重试次数
+          initial-interval: 1000   #初始重试时间
+          max-interval: 10000     #最大重试时间
+#          multiplier: 2   每次乘以上次的重试间隔，不得超过最大重试时间
+#          stateless:
+    publisher-confirm-type: correlated
+    publisher-returns: true
+#    test2:
+#      driver-class-name: com.mysql.cj.jdbc.Driver
+#      jdbc-url: jdbc:mysql://localhost:3306/uat?useUnicode=true&characterEncoding=UTF8&useSSL=false
+#      username: root
+#      password:
+mybatis:
+  mapper-locations: classpath*:mapper/*Mapper.xml
+  type-aliases-package: >
+    com.example.carrot.model
+  configuration:
+    cache-enabled: true #开启二级缓存
+properties:
+  name: success!!!!!!!!!!!!!!!!!!!!
+  number: 666
+
+ec-sap-urls:
+  sync-url: nice
+
+redis:
+  host: 127.0.0.1
+  port: 6379
