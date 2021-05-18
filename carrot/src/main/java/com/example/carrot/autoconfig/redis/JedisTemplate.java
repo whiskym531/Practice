@@ -16,27 +16,27 @@ public class JedisTemplate {
     }
 
     public <T> T execute(JedisTemplate.JedisAction<T> jedisAction) throws JedisException {
-        return (T) this.execute((JedisAction)jedisAction, 0);
+        return (T) this.execute(jedisAction, 0);
     }
 
     public <T> T execute(JedisTemplate.JedisAction<T> jedisAction, int dbIndex) throws JedisException {
         Jedis jedis = null;
         boolean broken = false;
 
-        Object var5;
+        Object result;
         try {
             jedis = this.jedisPool.getResource();
             jedis.select(dbIndex);
-            var5 = jedisAction.action(jedis);
-        } catch (JedisConnectionException var9) {
-            logger.error("Redis connection lost.", var9);
+            result = jedisAction.action(jedis);
+        } catch (JedisConnectionException e) {
+            logger.error("Redis connection lost.", e);
             broken = true;
-            throw var9;
+            throw e;
         } finally {
             this.closeResource(jedis, broken);
         }
 
-        return (T) var5;
+        return (T) result;
     }
 
     public void execute(JedisTemplate.JedisActionNoResult jedisAction) throws JedisException {
@@ -51,10 +51,10 @@ public class JedisTemplate {
             jedis = this.jedisPool.getResource();
             jedis.select(dbIndex);
             jedisAction.action(jedis);
-        } catch (JedisConnectionException var9) {
-            logger.error("Redis connection lost.", var9);
+        } catch (JedisConnectionException e) {
+            logger.error("Redis connection lost.", e);
             broken = true;
-            throw var9;
+            throw e;
         } finally {
             this.closeResource(jedis, broken);
         }
@@ -77,10 +77,10 @@ public class JedisTemplate {
     }
 
     public interface JedisActionNoResult {
-        void action(Jedis var1);
+        void action(Jedis jedis);
     }
 
     public interface JedisAction<T> {
-        T action(Jedis var1);
+        T action(Jedis jedis);
     }
 }
