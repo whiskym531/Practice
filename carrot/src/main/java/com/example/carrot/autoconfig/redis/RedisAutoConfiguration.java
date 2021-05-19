@@ -1,10 +1,8 @@
 package com.example.carrot.autoconfig.redis;
 
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
-import org.apache.logging.log4j.util.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -20,7 +18,6 @@ import java.util.Set;
 @Configuration
 @EnableConfigurationProperties({RedisProperties.class})
 public class RedisAutoConfiguration {
-    private static final Logger log = LoggerFactory.getLogger(RedisAutoConfiguration.class);
     @Autowired
     private RedisProperties properties;
 
@@ -44,9 +41,9 @@ public class RedisAutoConfiguration {
             Iterable<String> parts = Splitter.on(',').trimResults().omitEmptyStrings().split(sentinelProps);
             Set<String> sentinelHosts = Sets.newHashSet(parts);
             String masterName = this.properties.getSentinelMasterName();
-            return Strings.isNotEmpty(this.properties.getAuth()) ? new JedisSentinelPool(masterName, sentinelHosts, poolConfig) : new JedisSentinelPool(masterName, sentinelHosts, poolConfig, 2000, this.properties.getAuth());
+            return Strings.isNullOrEmpty(this.properties.getAuth()) ? new JedisSentinelPool(masterName, sentinelHosts, poolConfig) : new JedisSentinelPool(masterName, sentinelHosts, poolConfig, 2000, this.properties.getAuth());
         } else {
-            return Strings.isNotEmpty(this.properties.getAuth()) ? new JedisPool(poolConfig, this.properties.getHost(), this.properties.getPort()) : new JedisPool(poolConfig, this.properties.getHost(), this.properties.getPort(), 2000, this.properties.getAuth());
+            return Strings.isNullOrEmpty(this.properties.getAuth()) ? new JedisPool(poolConfig, this.properties.getHost(), this.properties.getPort()) : new JedisPool(poolConfig, this.properties.getHost(), this.properties.getPort(), 2000, this.properties.getAuth());
         }
     }
 

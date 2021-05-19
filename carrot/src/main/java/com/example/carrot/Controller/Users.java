@@ -555,4 +555,10 @@ public class Users {
         treeMap.put("11","22");
         treeMap.put("22","33");
     }
+    @Test
+    public void intTest(){
+        Integer i = 13;
+        Integer n = 13;
+        System.out.println(i == n);
+    }
 }
