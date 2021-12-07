@@ -19,7 +19,7 @@
     </sql>
 
     <sql id="cols_exclude_id">
-User_name,
+user_name,
 role,
 code,
 password,

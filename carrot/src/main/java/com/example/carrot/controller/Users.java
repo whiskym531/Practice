@@ -1,6 +1,7 @@
-package com.example.carrot.Controller;
+package com.example.carrot.controller;
 
-import com.example.boot.service.Service;
+//import com.example.boot.service.Service;
+
 import com.example.carrot.autoconfig.redis.JedisTemplate;
 import com.example.carrot.common.EcSapUrls;
 import com.example.carrot.model.Computer;
@@ -9,6 +10,8 @@ import com.example.carrot.service.UserService;
 import com.google.common.base.Charsets;
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
+import com.zaxxer.hikari.HikariDataSource;
+import javazoom.spi.mpeg.sampled.file.MpegAudioFileReader;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,8 +19,8 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import redis.clients.jedis.Jedis;
 
-import java.io.FileOutputStream;
-import java.io.OutputStream;
+import javax.sound.sampled.*;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.*;
@@ -27,6 +30,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * spring环境测试的两个注解，搭配方法上@Test
+ *
  * @SpringBootTest
  * @RunWith(SpringRunner.class)
  */
@@ -37,8 +41,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @RequestMapping("/api/admin/test")
 public class Users {
 
-    @Autowired
-    private Service service;
+    public class Inner {
+        @Autowired
+        private HikariDataSource dataSource;
+
+    }
+//    @Autowired
+//    private Service service;
 
     @Autowired
     private UserService userService;
@@ -49,6 +58,7 @@ public class Users {
     @Autowired
     private JedisTemplate jedisTemplate;
 
+
     @RequestMapping(value = "/create", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public Boolean create(@RequestBody User user) {
         Boolean aBoolean = userService.create(user);
@@ -56,18 +66,25 @@ public class Users {
         return aBoolean;
     }
 
-    @RequestMapping(value = "/find")
-    public User findById(@RequestParam Long id) {
-        User byId = userService.findById(id);
-        System.out.println(byId);
-        System.out.println(ecSapUrls.getSyncUrl());
-        jedisTemplate.execute(new JedisTemplate.JedisActionNoResult() {
+    @RequestMapping(value = "/jedisTest")
+    public String jedisTest(@RequestParam("key") String redisKey) {
+        Object execute = jedisTemplate.execute(new JedisTemplate.JedisAction() {
             @Override
-            public void action(Jedis jedis) {
-                jedis.set("a","z");
-                System.out.println(jedis.get("a"));
+            public String action(Jedis jedis) {
+                jedis.set(redisKey, redisKey + redisKey);
+                System.out.println(jedis.get(redisKey));
+                return jedis.get(redisKey);
             }
         });
+        return execute.toString();
+    }
+
+    @RequestMapping(value = "/find")
+    public User findById(@RequestParam Long id) throws Exception {
+        User byId = userService.findById(id);
+        Inner inner = new Inner();
+//        System.out.println(byId);
+//        System.out.println(ecSapUrls.getSyncUrl());
         return byId;
     }
 
@@ -82,18 +99,18 @@ public class Users {
         return userService.update(user);
     }
 
-    @RequestMapping("/nice")
-    public void auto() {
-        System.out.println(service.getMyName());
-        System.out.println(service.getMyNumber());
-        service.setMyName("success changed");
-    }
-    @RequestMapping("/nice1")
-    public void auto1() {
-        System.out.println(service.getMyName());
-        System.out.println(service.getMyNumber());
-        service.setMyName("success changed to 2");
-    }
+//    @RequestMapping("/nice")
+//    public void auto() {
+//        System.out.println(service.getMyName());
+//        System.out.println(service.getMyNumber());
+//        service.setMyName("success changed");
+//    }
+//    @RequestMapping("/nice1")
+//    public void auto1() {
+//        System.out.println(service.getMyName());
+//        System.out.println(service.getMyNumber());
+//        service.setMyName("success changed to 2");
+//    }
 
     @RequestMapping("/paging")
     public List<User> paging() {
@@ -101,11 +118,12 @@ public class Users {
     }
 
     @RequestMapping("/mq/test/{id}")
-    public Boolean mtTest(@PathVariable("id")Long id){
+    public Boolean mtTest(@PathVariable("id") Long id) {
         return userService.mq(id);
     }
 
     public static void main(String[] args) throws Exception {
+        long start = new Date().getTime();
         String[] strings = new String[]{"1", "2", "3"};
         List<Object> objects = new ArrayList<>();
         List<String> strings1 = Arrays.asList(strings);
@@ -118,11 +136,11 @@ public class Users {
         List<Object> objects2 = Arrays.asList(objects1);
         //objects2.remove(1); //数组转为list之后不可操作remove and add，报UnsupportedOperationException错
         System.out.println();
-        System.out.println("objects1="+objects1);
-        System.out.println("objects2="+objects2.get(1));
+        System.out.println("objects1=" + objects1);
+        System.out.println("objects2=" + objects2.get(1));
         String s = "7777";
         char[] chars = new char[20];
-        s.getChars(1,2,chars,2);
+        s.getChars(1, 2, chars, 2);
         if (s.startsWith("8"))//if不加{}，那只能写一行
             System.out.println("666");
         System.out.println("555");
@@ -139,20 +157,22 @@ public class Users {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            System.out.println("active--"+activeCount);
+            System.out.println("active--" + activeCount);
         });
+        System.out.println("first");
         Future<Object> submit = threadPoolExecutor.submit(() -> 1);
-        System.out.println("task---"+submit.get());
+        System.out.println("task---" + submit.get());
         try {
             TimeUnit.SECONDS.sleep(4);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println(threadPoolExecutor.getActiveCount());
+        TimeUnit.SECONDS.sleep(10);
+        System.out.println("active---" + threadPoolExecutor.getActiveCount());
         threadPoolExecutor.shutdown();
         TimeUnit.SECONDS.sleep(2);
-        System.out.println("ter---"+threadPoolExecutor.isTerminated());
-
+        System.out.println("ter---" + threadPoolExecutor.isTerminated());
+        System.out.println("spend--" + (new Date().getTime() - start));
     }
 
     class Thread1 extends Thread {
@@ -180,7 +200,7 @@ public class Users {
     }
 
     @Test
-    public void ThreadPool(){
+    public void ThreadPool() {
         ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(4, 8, 3, TimeUnit.SECONDS, new ArrayBlockingQueue(10));
         Future<?> submit = threadPoolExecutor.submit(new Callable<Object>() {
             @Override
@@ -200,8 +220,9 @@ public class Users {
         System.out.println(o);
         AtomicInteger atomicInteger = new AtomicInteger(3);
         System.out.println(atomicInteger.get());
-        atomicInteger.compareAndSet(3,4);
+        atomicInteger.compareAndSet(3, 4);
     }
+
     @Test
     public void t1() {
         Thread1 thread1 = new Thread1();
@@ -245,49 +266,52 @@ public class Users {
 //        Jedis jedis = new Jedis();
 //        jedis.set("b","b");
     }
+
     @Test
-    public void array(){
-        Integer[] target = new Integer[]{1, 2, 4,3,5,6,7};
-        Integer[] arr = new Integer[]{2, 1, 3, 4,5,6};
+    public void array() {
+        Integer[] target = new Integer[]{1, 2, 4, 3, 5, 6, 7};
+        Integer[] arr = new Integer[]{2, 1, 3, 4, 5, 6};
         Arrays.sort(target);
         Arrays.sort(arr);
         System.out.println(Arrays.equals(target, arr));
 
         String s = "abcd";
         char[] chars = new char[20];
-        System.out.println("---"+chars);
-        s.getChars(1,3,chars,1);
+        System.out.println("---" + chars);
+        s.getChars(1, 3, chars, 1);
         System.out.println(chars);
         System.out.println(chars[2]);
         System.out.println(target);
         List<Integer> integers = Arrays.asList(target);
         integers.sort(Comparator.naturalOrder());
-        float f = (float) integers.size()/2;
+        float f = (float) integers.size() / 2;
         System.out.println(Math.round(f));
         char c = s.charAt(1);
-        char d ='1';
+        char d = '1';
         StringBuffer sb = new StringBuffer(c);
-        System.out.println("sb----"+sb.toString());
+        System.out.println("sb----" + sb.toString());
         ArrayBlockingQueue arrayBlockingQueue = new ArrayBlockingQueue(10);
         arrayBlockingQueue.add(1);
         Object poll = arrayBlockingQueue.poll();
-        System.out.println("poll----"+poll);
+        System.out.println("poll----" + poll);
     }
 
     /**
      * io
+     *
      * @throws Exception
      */
     @Test
-    public void iot() throws Exception{
-        OutputStream outputStream = new FileOutputStream("D:\\log.txt",true); // 参数二，表示是否追加，true=追加
+    public void iot() throws Exception {
+        OutputStream outputStream = new FileOutputStream("D:\\log.txt", true); // 参数二，表示是否追加，true=追加
         outputStream.write("你好，老王\n".getBytes("utf-8"));
         outputStream.close();
         System.out.println(Runtime.getRuntime().availableProcessors());
 
     }
+
     @Test
-    public void leet(){
+    public void leet() {
         String s = "abcd";
         char d = s.charAt(1);
         String s1 = String.valueOf(d);
@@ -302,26 +326,28 @@ public class Users {
         for (char c : t.toCharArray()) {
             res ^= c;
         }
-        System.out.println("res----"+res);
+        System.out.println("res----" + res);
     }
+
     @Test
-    public void st(){
+    public void st() {
         String s = "abbcabfbbcvbca";
         String[] bs = s.split("b");
-        System.out.println(bs.length-1);
+        System.out.println(bs.length - 1);
 
     }
 
     /**
      * 深拷贝
+     *
      * @throws Exception
      */
     @Test
-    public void cloneTest () throws Exception{
+    public void cloneTest() throws Exception {
         User user = new User();
         user.setId(1L);
         user.setUserName("clone");
-        user.setComputer(new Computer("aaa","aaa"));
+        user.setComputer(new Computer("aaa", "aaa"));
         User clone = user.deepClone(user);
         user.setId(2L);
         user.setUserName("ccc");
@@ -332,6 +358,7 @@ public class Users {
     }
 
     private HashMap sensitiveWordMap;
+
     @Test
     public void addSensitiveWordToHashMap() {
         Set<String> keyWordSet = new HashSet<>();
@@ -343,24 +370,23 @@ public class Users {
         Map<String, String> newWorMap = null;
         //迭代keyWordSet
         Iterator<String> iterator = keyWordSet.iterator();
-        while(iterator.hasNext()){
+        while (iterator.hasNext()) {
             key = iterator.next();    //关键字
             nowMap = sensitiveWordMap;
-            for(int i = 0 ; i < key.length() ; i++){
+            for (int i = 0; i < key.length(); i++) {
                 char keyChar = key.charAt(i);       //转换成char型
                 Object wordMap = nowMap.get(keyChar);       //获取
 
-                if(wordMap != null){        //如果存在该key，直接赋值
+                if (wordMap != null) {        //如果存在该key，直接赋值
                     nowMap = (Map) wordMap;
-                }
-                else{     //不存在则，则构建一个map，同时将isEnd设置为0，因为他不是最后一个
-                    newWorMap = new HashMap<String,String>();
+                } else {     //不存在则，则构建一个map，同时将isEnd设置为0，因为他不是最后一个
+                    newWorMap = new HashMap<String, String>();
                     newWorMap.put("isEnd", "0");     //不是最后一个
                     nowMap.put(keyChar, newWorMap);
                     nowMap = newWorMap;
                 }
 
-                if(i == key.length() - 1){
+                if (i == key.length() - 1) {
                     nowMap.put("isEnd", "1");    //最后一个
                 }
             }
@@ -369,13 +395,13 @@ public class Users {
         System.out.println(sensitiveWordMap);
     }
 
-    public Set<String> getSensitiveWord(String txt , int matchType){
+    public Set<String> getSensitiveWord(String txt, int matchType) {
         Set<String> sensitiveWordList = new HashSet<String>();
 
-        for(int i = 0 ; i < txt.length() ; i++){
+        for (int i = 0; i < txt.length(); i++) {
             int length = CheckSensitiveWord(txt, i, matchType);    //判断是否包含敏感字符
-            if(length > 0){    //存在,加入list中
-                sensitiveWordList.add(txt.substring(i, i+length));
+            if (length > 0) {    //存在,加入list中
+                sensitiveWordList.add(txt.substring(i, i + length));
                 i = i + length - 1;    //减1的原因，是因为for会自增
             }
         }
@@ -383,41 +409,42 @@ public class Users {
         return sensitiveWordList;
 
     }
-    @SuppressWarnings({ "rawtypes"})
-    public int CheckSensitiveWord(String txt,int beginIndex,int matchType){
-        boolean  flag = false;    //敏感词结束标识位：用于敏感词只有1位的情况
+
+    @SuppressWarnings({"rawtypes"})
+    public int CheckSensitiveWord(String txt, int beginIndex, int matchType) {
+        boolean flag = false;    //敏感词结束标识位：用于敏感词只有1位的情况
         int matchFlag = 0;     //匹配标识数默认为0
         char word = 0;
         Map nowMap = sensitiveWordMap;
-        for(int i = beginIndex; i < txt.length() ; i++){
+        for (int i = beginIndex; i < txt.length(); i++) {
             word = txt.charAt(i);
             System.out.println(nowMap);
             nowMap = (Map) nowMap.get(word);     //获取指定key
             System.out.println(nowMap);
-            if(nowMap != null){     //存在，则判断是否为最后一个
+            if (nowMap != null) {     //存在，则判断是否为最后一个
                 matchFlag++;     //找到相应key，匹配标识+1
-                if("1".equals(nowMap.get("isEnd"))){       //如果为最后一个匹配规则,结束循环，返回匹配标识数
+                if ("1".equals(nowMap.get("isEnd"))) {       //如果为最后一个匹配规则,结束循环，返回匹配标识数
                     flag = true;       //结束标志位为true
-                    if(1 == matchType){    //最小规则，直接返回,最大规则还需继续查找
+                    if (1 == matchType) {    //最小规则，直接返回,最大规则还需继续查找
                         break;
                     }
                 }
-            }
-            else{     //不存在，直接返回
+            } else {     //不存在，直接返回
                 break;
             }
         }
-        if(matchFlag < 2 || !flag){        //长度必须大于等于1，为词
+        if (matchFlag < 2 || !flag) {        //长度必须大于等于1，为词
             matchFlag = 0;
         }
         return matchFlag;
     }
+
     @Test
-    public void hashmapT(){
+    public void hashmapT() {
         User user = new User();
         user.setUserName("user");
         HashMap<Object, Object> objectObjectHashMap = new HashMap<>();
-        objectObjectHashMap.put(user,"11");
+        objectObjectHashMap.put(user, "11");
         user.setUserName("uuu");
         System.out.println(user);
         System.out.println(objectObjectHashMap);
@@ -425,6 +452,7 @@ public class Users {
 
     /**
      * call接口&读写锁
+     *
      * @throws Exception
      */
     @Test
@@ -463,7 +491,7 @@ public class Users {
                 e.printStackTrace();
             }
             int j = n.get();
-            System.out.println("read-----"+j);
+            System.out.println("read-----" + j);
             reentrantReadWriteLock.readLock().unlock();//unlock最好放在finally里面
         });
         startWrite.start();
@@ -471,24 +499,27 @@ public class Users {
         startWrite.join();
         startRead.join();
 //        TimeUnit.SECONDS.sleep(13);
-        System.out.println("future-----"+futureTask.get());//如果调了get()，必须等待执行完
+        System.out.println("future-----" + futureTask.get());//如果调了get()，必须等待执行完
         System.out.println(n);
     }
+
     @Test
-    public void sync(){
-        synchronized (this){
+    public void sync() {
+        synchronized (this) {
             System.out.println("this");
         }
     }
+
     @Test
-    public void hwT(){
+    public void hwT() {
         int[] ints = {10000};
         System.out.println(new StringBuffer(String.valueOf(ints[0])).reverse());
         System.out.println(ints.length);
         Collections.synchronizedList(new ArrayList<>());
     }
+
     @Test
-    public void work(){
+    public void work() {
         ArrayList<Integer> integers = new ArrayList<>();
         integers.add(1);
         integers.add(2);
@@ -504,10 +535,11 @@ public class Users {
         integers2.clear();
         System.out.println(integers2);
         System.out.println(integers);
-        System.out.println(15+(15>>1));
+        System.out.println(15 + (15 >> 1));
     }
+
     @Test
-    public void resize() throws Exception{
+    public void resize() throws Exception {
         ArrayList<Object> objects = new ArrayList<>(15);
         System.out.println(objects.size());
         objects.add(1);
@@ -524,41 +556,182 @@ public class Users {
          */
         Field f = objects.getClass().getDeclaredField("elementData");
         f.setAccessible(true);
-        Object[] o=(Object[])f.get(objects);
+        Object[] o = (Object[]) f.get(objects);
         System.out.println(o.length);
 
     }
+
     @Test
-    public void stringTest(){
+    public void stringTest() {
         String abc = new String("abc");
         String s = "abc";
         String s1 = "abc";
-        System.out.println(s1==s);
+        System.out.println(s1 == s);
         s1 = "ab";
-        System.out.println(s1==s);
+        System.out.println(s1 == s);
         s1 = "abc";
         s1 = new String("abc");
-        System.out.println(s1==s);
+        System.out.println(s1 == s);
         System.out.println(Math.round(-11.5));
         String s2 = "2222";
         s2.getBytes();
     }
+
     @Test
-    public void springTest(){
+    public void springTest() {
         User byId = userService.findById(2L);
         System.out.println(byId);
     }
+
     @Test
-    public void hashmapTest(){
+    public void hashmapTest() {
         HashMap<Object, Object> map = new HashMap<>();
         TreeMap<Object, Object> treeMap = new TreeMap<>();
-        treeMap.put("11","22");
-        treeMap.put("22","33");
+        treeMap.put("11", "22");
+        treeMap.put("22", "33");
     }
+
     @Test
-    public void intTest(){
+    public void intTest() {
         Integer i = 13;
         Integer n = 13;
         System.out.println(i == n);
+    }
+
+    @Test
+    public void sss() throws FileNotFoundException {
+
+        File file1 = new File("src/main/resources/mapper/UserMapper.xml");
+        if (file1.exists()) {
+            System.out.println("yes");
+        }
+    }
+
+    @Test
+    public void gxl() {
+//        int num = 0;
+//        for (int i = 1; i < 100; i++) {
+//            if (i % 3 == 0) {
+//                System.out.println(i);
+//                num++;
+//            }
+//            if (num == 15) {
+//                break;
+//            }
+//        }
+        for (int i = 1; i < 15; i++) {
+            System.out.println(3 * i);
+        }
+    }
+
+    @Test
+    public void wav() throws Exception {
+        AudioInputStream audioInputStream =
+                AudioSystem.getAudioInputStream(
+                        new File("D:\\CloudMusic\\PUBG - PUBG 1.0 MainTheme.mp3"));
+        AudioFormat format = audioInputStream.getFormat();
+        DataLine.Info dataLineInfo = new DataLine.Info(SourceDataLine.class,
+                format, AudioSystem.NOT_SPECIFIED);
+        SourceDataLine sourceDataLine = (SourceDataLine) AudioSystem
+                .getLine(dataLineInfo);
+        sourceDataLine.open(format);
+        sourceDataLine.start();
+
+        /*
+         * 从输入流中读取数据发送到混音器
+         */
+        int count;
+        byte tempBuffer[] = new byte[1024];
+        while ((count = audioInputStream.read(tempBuffer, 0, tempBuffer.length)) != -1) {
+            if (count > 0) {
+                sourceDataLine.write(tempBuffer, 0, count);
+            }
+        }
+
+        // 清空数据缓冲,并关闭输入
+        sourceDataLine.drain();
+        sourceDataLine.close();
+    }
+
+    SourceDataLine line = null;
+    Thread music = new Thread();
+    volatile Boolean stop = false;
+
+    @Test
+    public void mp3() throws Exception {
+        File file = new File("D:\\CloudMusic\\Raven - Dj Narciso Rsproduções-GTA SAN REMAKE（Raven remix）.mp3");
+        MpegAudioFileReader mp = new MpegAudioFileReader();
+        AudioInputStream stream = mp.getAudioInputStream(file);
+        AudioFormat format = stream.getFormat();
+        AudioFormat format1 = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, format.getSampleRate(), 16, format.getChannels(), format.getChannels() * 2, format.getSampleRate(), false);
+        stream = AudioSystem.getAudioInputStream(format1, stream);
+        AudioFormat target = stream.getFormat();
+        DataLine.Info dataLineInfo = new DataLine.Info(SourceDataLine.class,
+                target, AudioSystem.NOT_SPECIFIED);
+        AudioInputStream finalStream = stream;
+        line = (SourceDataLine) AudioSystem.getLine(dataLineInfo);
+        music = new Thread(() ->
+        {
+            try {
+                int len = -1;
+                line.open(target);
+                line.start();
+                byte[] buffer = new byte[1024];
+                while ((len = finalStream.read(buffer)) > 0) {
+                    while (stop) {
+                    }
+                    line.write(buffer, 0, len);
+                }
+                line.drain();
+                line.stop();
+                line.close();
+            } catch (Exception e) {
+                throw new RuntimeException(e.getMessage());
+            } finally {
+                try {
+                    finalStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        music.start();
+        TimeUnit.SECONDS.sleep(10);
+//        stop = true;
+        TimeUnit.SECONDS.sleep(3);
+//        stop = false;
+        TimeUnit.SECONDS.sleep(10);
+        System.out.println("work");
+    }
+
+    @Test
+    public void mp3Start() {
+        music.start();
+    }
+
+    @Test
+    public void mp3Stop() throws InterruptedException {
+        music.wait();
+    }
+
+    @Test
+    public void thread() throws Exception {
+        Thread thread = new Thread(() -> {
+            for (int i = 0; i < 10; i++) {
+                try {
+                    TimeUnit.SECONDS.sleep(1);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println(i);
+            }
+        });
+        thread.start();
+        TimeUnit.SECONDS.sleep(3);
+        synchronized (thread) {
+            thread.wait();
+            System.out.println("?");
+        }
+        TimeUnit.SECONDS.sleep(3);
     }
 }

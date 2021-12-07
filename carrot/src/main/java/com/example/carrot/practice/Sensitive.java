@@ -7,7 +7,7 @@ import java.util.*;
 /**
  * 敏感词demo
  */
-public class sensitive {
+public class Sensitive {
 
     private HashMap sensitiveWordMap;
     @Test

@@ -1,6 +1,6 @@
-package com.example.carrot.service.Impl;
+package com.example.carrot.service.impl;
 
-import com.example.carrot.Dao.UserDao;
+import com.example.carrot.dao.UserDao;
 import com.example.carrot.model.User;
 import com.example.carrot.service.UserService;
 import org.springframework.stereotype.Service;

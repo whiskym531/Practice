@@ -1,6 +1,5 @@
-package com.example.carrot.RabbitMq;
+package com.example.carrot.rabbitMq;
 
-import com.alibaba.fastjson.JSONObject;
 import com.example.carrot.common.EcSapUrls;
 import com.example.carrot.model.User;
 import com.rabbitmq.client.Channel;
@@ -66,7 +65,7 @@ public class MqTest {
     }
     @Value(value = "${spring.rabbitmq.listener.simple.max-concurrency}")
     private Integer retry;
-    private Integer flag = 0;
+    private Integer flag = 0;  //已重试次数
     @RabbitListener(queues = "trade.purchase-order-delay.hj.do.queue")
     public void purchaseOrderIsDelay(
             @Payload User id,

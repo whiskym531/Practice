@@ -1,4 +1,4 @@
-package com.example.carrot.Dao;
+package com.example.carrot.dao;
 
 import com.example.carrot.common.MyBatisDao;
 import com.example.carrot.model.User;
@@ -6,7 +6,6 @@ import com.example.carrot.model.User;
 import org.springframework.amqp.core.ReturnedMessage;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.text.SimpleDateFormat;
@@ -21,12 +20,18 @@ public class UserDao extends MyBatisDao<User> {
     private final RabbitTemplate rabbitTemplate;
 
     public UserDao(RabbitTemplate rabbitTemplate) {
+        /**
+         * 消息投递到交换机.成功.的时候
+         */
         rabbitTemplate.setConfirmCallback(new RabbitTemplate.ConfirmCallback() {
             @Override
             public void confirm(CorrelationData correlationData, boolean b, String s) {
                 System.out.println("corId---"+correlationData.getId());
             }
         });
+        /**
+         * 消息投递到queue.失败.的时候
+         */
         rabbitTemplate.setReturnsCallback(new RabbitTemplate.ReturnsCallback() {
             @Override
             public void returnedMessage(ReturnedMessage returnedMessage) {

@@ -1,15 +1,11 @@
 package com.example.carrot.model;
 
-import com.example.carrot.service.Impl.UserServiceImpl;
 import lombok.Data;
-import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.MethodInterceptor;
-import org.springframework.cglib.proxy.MethodProxy;
 
 import java.io.*;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.HashMap;
 
 @Data
@@ -55,6 +51,12 @@ public class User implements Serializable ,Cloneable{
             @Override
             public void so() {
                 System.out.println("in computer" + i);
+            }
+
+            @Override
+            public void so2() {
+                super.so2();
+                System.out.println("computer in user");
             }
         };
         computer.so();

@@ -1,4 +1,4 @@
-package com.example.carrot.Interceptor;
+package com.example.carrot.interceptor;
 
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
