@@ -11,6 +11,7 @@ import com.google.common.base.Charsets;
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
 import com.zaxxer.hikari.HikariDataSource;
+import javazoom.jl.player.Player;
 import javazoom.spi.mpeg.sampled.file.MpegAudioFileReader;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -658,6 +659,13 @@ public class Users {
     volatile Boolean stop = false;
 
     @Test
+    public void player() throws Exception {
+        Player player = new Player(
+                new FileInputStream("D:\\CloudMusic\\Raven - Dj Narciso Rsproduções-GTA SAN REMAKE（Raven remix）.mp3"));
+        player.play();
+    }
+
+    @Test
     public void mp3() throws Exception {
         File file = new File("D:\\CloudMusic\\Raven - Dj Narciso Rsproduções-GTA SAN REMAKE（Raven remix）.mp3");
         MpegAudioFileReader mp = new MpegAudioFileReader();
@@ -697,10 +705,15 @@ public class Users {
         });
         music.start();
         TimeUnit.SECONDS.sleep(10);
+//        Player player = new Player(
+//                new FileInputStream("D:\\CloudMusic\\Raven - Dj Narciso Rsproduções-GTA SAN REMAKE（Raven remix）.mp3"));
+//        player.play(); //会一起播放
+
 //        stop = true;
-        TimeUnit.SECONDS.sleep(3);
+//        TimeUnit.SECONDS.sleep(3);
 //        stop = false;
-        TimeUnit.SECONDS.sleep(10);
+//        TimeUnit.SECONDS.sleep(10);
+        music.join();
         System.out.println("work");
     }
 
@@ -734,4 +747,27 @@ public class Users {
         }
         TimeUnit.SECONDS.sleep(3);
     }
+
+    @Test
+    public void print() {
+        if(System.out.printf("A") == null){
+            System.out.println("A");
+        }else{
+            System.out.println("B");
+        };
+    }
+
+    @Test
+    public void equals() {
+        String a = "abcd";
+        String b = "ab"+"cd";
+        String ss = "abcd";
+        String c = "ab";
+        String d = "cd";
+        String s = c+d;
+        System.out.println(a==b);
+        System.out.println(a==ss);
+        System.out.println(a==s);
+    }
+
 }

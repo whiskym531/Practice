@@ -67,5 +67,11 @@ public class Interview {
 //    // 最近60秒的每秒计数量的集合
 //            public List<Long> last60SecondHistory;
 //    }
-
+    public static void main(String[] args) {
+        StringBuffer stringBuffer = new StringBuffer();
+        for (int i = 201; i < 400; i++) {
+            stringBuffer.append(i);
+        }
+        System.out.println(stringBuffer);
+    }
 }
